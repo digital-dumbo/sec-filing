@@ -21,14 +21,16 @@ The product goal is intentionally small: a local Typer CLI that uses SQLite for 
     uv run ruff check .
     uv run ruff format --check .
 
-## Planning Documents
+## Documentation Index
 
-- `docs/TECHNICAL_DOCUMENTATION.md` covers architecture, diagrams, security notes, and technical flows.
-- `docs/FUNCTIONAL_DOCUMENTATION.md` covers functional behavior, data models, and examples.
-- `docs/LOCAL_SANDBOX_DEV_AND_TESTING.md` covers local setup, end-to-end testing, and DB/log verification.
-- `docs/MVP_PRD.md` is the product requirement document.
-- `docs/HARNESSING_STEPS.md` is the steering guide for incremental execution.
-- `.agent/execplans/k10fetcher_mvp_execplan.md` is the living ExecPlan.
+- [AGENTS.md](AGENTS.md) defines repository guidance for contributors and explains when to use ExecPlans.
+- [docs/MVP_PRD.md](docs/MVP_PRD.md) captures the MVP product requirements, goals, non-goals, workflow, and acceptance criteria.
+- [docs/FUNCTIONAL_DOCUMENTATION.md](docs/FUNCTIONAL_DOCUMENTATION.md) describes user-facing CLI behavior, data models, command examples, and expected outcomes.
+- [docs/TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md) covers architecture, components, runtime flows, diagrams, security notes, and testing considerations.
+- [docs/LOCAL_SANDBOX_DEV_AND_TESTING.md](docs/LOCAL_SANDBOX_DEV_AND_TESTING.md) explains local setup, sandbox runs, end-to-end testing, and verification of SQLite, logs, and PDFs.
+- [docs/HARNESSING_STEPS.md](docs/HARNESSING_STEPS.md) provides the milestone-by-milestone steering guide for building and validating the CLI MVP.
+- [.agent/PLANS.md](.agent/PLANS.md) defines the required structure and maintenance rules for repository ExecPlans.
+- [.agent/execplans/k10fetcher_mvp_execplan.md](.agent/execplans/k10fetcher_mvp_execplan.md) is the living execution plan for the `k10fetcher` MVP.
 
 ## Current CLI Behavior
 
