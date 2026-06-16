@@ -29,6 +29,7 @@ The product goal is intentionally small: a local Typer CLI that uses SQLite for 
 - [docs/TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md) covers architecture, components, runtime flows, diagrams, security notes, and testing considerations.
 - [docs/LOCAL_SANDBOX_DEV_AND_TESTING.md](docs/LOCAL_SANDBOX_DEV_AND_TESTING.md) explains local setup, sandbox runs, end-to-end testing, and verification of SQLite, logs, and PDFs.
 - [docs/HARNESSING_STEPS.md](docs/HARNESSING_STEPS.md) provides the milestone-by-milestone steering guide for building and validating the CLI MVP.
+- [docs/PARALLEL_FETCH_HARNESSING_STEPS.md](docs/PARALLEL_FETCH_HARNESSING_STEPS.md) provides the milestone-by-milestone steering guide for the parallel multi-ticker fetch enhancement.
 - [.agent/PLANS.md](.agent/PLANS.md) defines the required structure and maintenance rules for repository ExecPlans.
 - [.agent/execplans/k10fetcher_mvp_execplan.md](.agent/execplans/k10fetcher_mvp_execplan.md) is the living execution plan for the `k10fetcher` MVP.
 

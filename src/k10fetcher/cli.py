@@ -13,7 +13,7 @@ from rich.table import Table
 from k10fetcher.config import settings
 from k10fetcher.db import init_db
 from k10fetcher.logging import configure_logging
-from k10fetcher.pipeline import process_filing_request
+from k10fetcher.pipeline import process_filing_requests_parallel
 from k10fetcher.rate_limit import RateLimiter
 from k10fetcher.repository import (
     count_rows,
@@ -25,6 +25,7 @@ from k10fetcher.sec_client import fetch_company_tickers
 
 app = typer.Typer(help="Fetch latest SEC 10-K filings into local PDFs.")
 console = Console()
+_progress_print_lock = threading.Lock()
 
 
 def _parse_tickers(values: tuple[str, ...]) -> list[str]:
@@ -46,6 +47,31 @@ def _ensure_runtime_paths(db_path: Path) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     settings.log_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _resolve_worker_count(request_count: int, workers: int | None) -> int:
+    if workers is not None:
+        if workers < 1:
+            raise typer.BadParameter("workers must be greater than zero.")
+        return min(workers, request_count)
+    if request_count <= 1:
+        return 1
+    return min(request_count, 4)
+
+
+@contextmanager
+def _line_progress_step(ticker: str, step: str) -> Iterator[None]:
+    label = f"{ticker} | {step}"
+    with _progress_print_lock:
+        console.print(f"{label} started")
+    try:
+        yield
+    except Exception:
+        with _progress_print_lock:
+            console.print(f"{label} failed")
+        raise
+    with _progress_print_lock:
+        console.print(f"{label} done")
 
 
 @contextmanager
@@ -187,6 +213,10 @@ def fetch(
     db_path: Annotated[Path, typer.Option(help="SQLite database path.")] = settings.db_path,
     data_dir: Annotated[Path, typer.Option(help="PDF output data directory.")] = settings.data_dir,
     rate_limit: Annotated[int, typer.Option(help="Max SEC requests per second.")] = 10,
+    workers: Annotated[
+        int | None,
+        typer.Option(help="Max ticker requests to process concurrently."),
+    ] = None,
     no_cache: Annotated[
         bool,
         typer.Option(help="Ignore existing successful outputs."),
@@ -202,6 +232,7 @@ def fetch(
 
     data_dir.mkdir(parents=True, exist_ok=True)
     batch_id, requests = create_filing_requests(db_path, normalized)
+    worker_count = _resolve_worker_count(len(requests), workers)
     console.print(f"Batch submitted: {batch_id}")
     console.print(f"Requests created: {len(requests)}")
     submitted_tickers = ", ".join(
@@ -209,20 +240,20 @@ def fetch(
     )
     console.print(f"Tickers: {submitted_tickers}")
     console.print(f"Rate limit: {rate_limit} SEC requests/second; no_cache={no_cache}")
+    console.print(f"Workers: {worker_count}")
 
     limiter = RateLimiter(rate_limit)
-    results = [
-        process_filing_request(
-            db_path=db_path,
-            data_dir=data_dir,
-            request=request,
-            user_agent=settings.sec_user_agent,
-            rate_limiter=limiter,
-            no_cache=no_cache,
-            progress=_progress_step,
-        )
-        for request in requests
-    ]
+    progress = _progress_step if worker_count == 1 else _line_progress_step
+    results = process_filing_requests_parallel(
+        db_path=db_path,
+        data_dir=data_dir,
+        requests=requests,
+        user_agent=settings.sec_user_agent,
+        rate_limiter=limiter,
+        workers=worker_count,
+        no_cache=no_cache,
+        progress=progress,
+    )
 
     table = Table(title=f"Batch: {batch_id}")
     table.add_column("Input")

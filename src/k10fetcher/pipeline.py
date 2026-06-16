@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -235,3 +236,66 @@ def process_filing_request(
         pdf_path=str(pdf_path),
     )
     return ProcessResult(ticker=ticker, status="SUCCESS", destination_or_error=str(pdf_path))
+
+
+def process_filing_requests_parallel(
+    *,
+    db_path: Path,
+    data_dir: Path,
+    requests: list[FilingRequest],
+    user_agent: str,
+    rate_limiter: RateLimiter,
+    workers: int,
+    no_cache: bool = False,
+    progress: StepProgress = _no_progress,
+) -> list[ProcessResult]:
+    if workers < 1:
+        raise ValueError("workers must be positive")
+    if not requests:
+        return []
+
+    results: list[ProcessResult | None] = [None] * len(requests)
+    worker_count = min(workers, len(requests))
+
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        future_to_index = {
+            executor.submit(
+                process_filing_request,
+                db_path=db_path,
+                data_dir=data_dir,
+                request=request,
+                user_agent=user_agent,
+                rate_limiter=rate_limiter,
+                no_cache=no_cache,
+                progress=progress,
+            ): index
+            for index, request in enumerate(requests)
+        }
+
+        for future in as_completed(future_to_index):
+            index = future_to_index[future]
+            request = requests[index]
+            ticker = request.normalized_ticker or request.raw_input.strip().upper()
+            try:
+                results[index] = future.result()
+            except Exception as exc:
+                reason = _failure_reason("WORKER_FAILED", str(exc))
+                complete_request_failure(
+                    db_path,
+                    request.id,
+                    ticker=ticker,
+                    error_reason=reason,
+                )
+                logger = get_logger(
+                    batch_id=request.batch_id,
+                    request_id=request.id,
+                    ticker=ticker,
+                )
+                logger.exception("request_failed", step="FAILED", error=reason)
+                results[index] = ProcessResult(
+                    ticker=ticker,
+                    status="FAILED",
+                    destination_or_error=reason,
+                )
+
+    return [result for result in results if result is not None]

@@ -74,14 +74,16 @@ ON filing_responses (ticker);
 
 def connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(db_path)
+    connection = sqlite3.connect(db_path, timeout=30.0)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA busy_timeout = 30000")
     return connection
 
 
 def init_db(db_path: Path) -> None:
     with connect(db_path) as connection:
+        connection.execute("PRAGMA journal_mode = WAL")
         connection.executescript(SCHEMA_SQL)
 
 

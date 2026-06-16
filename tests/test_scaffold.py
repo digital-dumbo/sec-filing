@@ -68,6 +68,35 @@ def test_fetch_validates_empty_ticker_input() -> None:
     assert result.exit_code != 0
 
 
+def test_fetch_reports_configured_workers(tmp_path: Path) -> None:
+    db_path = tmp_path / "k10fetcher.db"
+
+    result = runner.invoke(
+        app,
+        [
+            "fetch",
+            "NOPE",
+            "ALSO_NOPE",
+            "--workers",
+            "2",
+            "--db-path",
+            str(db_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Workers: 2" in result.output
+    assert "NOPE" in result.output
+    assert "ALSO_NOPE" in result.output
+
+
+def test_fetch_validates_worker_count() -> None:
+    result = runner.invoke(app, ["fetch", "AAPL", "--workers", "0"])
+
+    assert result.exit_code != 0
+    assert "workers must be greater than zero" in result.output
+
+
 def test_init_db_is_idempotent(tmp_path: Path) -> None:
     db_path = tmp_path / "k10fetcher.db"
 
