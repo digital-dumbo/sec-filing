@@ -4,6 +4,8 @@
 
 The product goal is intentionally small: a local Typer CLI that uses SQLite for input, processing events, and output records while fetching latest SEC 10-K filings. It avoids Redis, Celery, brokers, web APIs, and long-running daemons.
 
+Adding conflicting statement at line 7
+
 ## Quick Start
 
     uv sync
