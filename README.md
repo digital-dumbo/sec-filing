@@ -4,7 +4,7 @@
 
 The product goal is intentionally small: a local Typer CLI that uses SQLite for input, processing events, and output records while fetching latest SEC 10-K filings. It avoids Redis, Celery, brokers, web APIs, and long-running daemons.
 
-## Quick Start
+## Quick Start my conflict
 
     uv sync
     uv run k10fetcher --help
