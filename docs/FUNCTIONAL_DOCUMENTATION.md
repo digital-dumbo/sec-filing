@@ -4,6 +4,8 @@
 
 `k10fetcher` is a local CLI that fetches latest SEC 10-K filings for one or more tickers, converts the SEC filing HTML to PDF, stores all request/output state in SQLite, writes JSON-lines logs, and prints terminal status tables.
 
+adding conflict
+
 The user-facing workflow is:
 
 ```bash
