@@ -6,7 +6,7 @@ The product goal is intentionally small: a local Typer CLI that uses SQLite for 
 
 Adding conflicting statement at line 7
 
-## Quick Start
+## Quick Start my conflict
 
     uv sync
     uv run k10fetcher --help
